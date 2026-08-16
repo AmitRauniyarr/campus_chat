@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Campus Chat — BIT Mesra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root {
+    --bg: #070c14;
+    --surface: rgba(20, 28, 42, 0.7);
+    --surface-2: rgba(30, 41, 59, 0.5);
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #F3F4F6;
+    --muted: #9CA3AF;
+    --accent: #38BDF8;
+    --accent-dim: rgba(56, 189, 248, 0.12);
+    --link: #FDBA74;
+    --bubble-me: linear-gradient(135deg, #0d9488, #0f766e);
+    --bubble-other: rgba(30, 41, 59, 0.85);
+    --glow: 0 0 15px rgba(56, 189, 248, 0.25);
+    --dot: rgba(255, 255, 255, 0.015);
+    --body-bg: radial-gradient(circle at 50% 50%, #0c1524, #05080f);
+    --login-bg: radial-gradient(circle at 15% 15%, rgba(56,189,248,0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(253,186,116,0.08), transparent 45%), #05080f;
+  }
+
+  html[data-theme="light"] {
+    --bg: #EEF2F7;
+    --surface: rgba(255, 255, 255, 0.85);
+    --surface-2: rgba(241, 245, 249, 0.9);
+    --border: rgba(15, 23, 42, 0.09);
+    --text: #0F172A;
+    --muted: #64748B;
+    --accent: #0284C7;
+    --accent-dim: rgba(2, 132, 199, 0.10);
+    --link: #C2650B;
+    --bubble-me: linear-gradient(135deg, #0d9488, #0f766e);
+    --bubble-other: rgba(255, 255, 255, 0.95);
+    --glow: 0 0 15px rgba(2, 132, 199, 0.2);
+    --dot: rgba(15, 23, 42, 0.03);
+    --body-bg: radial-gradient(circle at 50% 50%, #f8fafc, #e2e8f0);
+    --login-bg: radial-gradient(circle at 15% 15%, rgba(2,132,199,0.10), transparent 45%), radial-gradient(circle at 85% 85%, rgba(194,101,11,0.06), transparent 45%), #EEF2F7;
+  }
+  * { box-sizing: border-box; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+  body {
+    margin:0;
+    background: var(--body-bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    height:100vh;
+    overflow:hidden;
+    transition: background .2s ease, color .2s ease;
+  }
+  h1,h2,h3,.display { font-family:'Space Grotesk',sans-serif; }
+  .mono { font-family:'JetBrains Mono',monospace; }
+
+  input {
+    width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:10px;
+    padding:10px 14px; color:var(--text); font-size:13.5px; font-family:'Inter',sans-serif; outline:none;
+    transition: all 0.2s ease;
+  }
+  input:focus { border-color:var(--accent); box-shadow: var(--glow); }
+
+  select { font-family:'Inter',sans-serif; outline:none; }
+
+  button { font-family:'Inter',sans-serif; cursor:pointer; outline:none; }
+  button.primary {
+    background: var(--accent); color:#06202E; border:none; border-radius:10px;
+    padding:10px 18px; font-weight:600; font-size:13.5px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+  }
+  button.primary:hover { filter:brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 15px rgba(56, 189, 248, 0.3); }
+  button.primary:active { transform: translateY(0); }
+
+  .icon-btn {
+    background:none; border:none; color:var(--muted); font-size:18px; width:36px; height:36px;
+    border-radius:10px; display:flex; align-items:center; justify-content:center;
+    transition: all 0.2s ease;
+  }
+  .icon-btn:hover { background:rgba(255, 255, 255, 0.05); color:var(--text); }
+  .icon-btn.active { background:var(--accent-dim); color:var(--accent); }
+
+  #login-screen {
+    height:100vh; display:flex; align-items:center; justify-content:center;
+    background: var(--login-bg);
+  }
+  .id-card {
+    width:350px;
+    background: rgba(18, 26, 40, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .id-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 35px 70px rgba(0,0,0,0.6), 0 0 30px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .id-card-header {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95));
+    padding: 24px 26px 20px;
+    border-bottom: 2px solid var(--accent);
+    position: relative;
+    overflow: hidden;
+  }
+  .id-card-header .eyebrow { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.12em; color:var(--accent); text-transform:uppercase; }
+  .id-card-header h1 { margin:6px 0 0; font-size:24px; font-weight: 700; }
+  .id-card-header .sub { margin:4px 0 0; font-size:12.5px; color:var(--muted); }
+  .id-stripe { position:absolute; top:0; right:0; width:46px; height:100%; background:repeating-linear-gradient(-45deg,var(--accent),var(--accent) 4px,transparent 4px,transparent 10px); opacity:.12; }
+  .id-card-body { padding: 24px 26px 30px; }
+  .field-label { font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; margin-bottom:6px; display:block; }
+  .id-card-body input { margin-bottom:18px; padding:12px; }
+  #loginError { color:#ff7a7a; font-size:12.5px; margin-top:2px; min-height:16px; }
+
+  #app-screen {
+    display:none;
+    height:100vh;
+    grid-template-rows: 56px 1fr 34px;
+    grid-template-columns: 56px 300px 1fr 270px;
+    padding: 12px;
+    gap: 12px;
+    box-sizing: border-box;
+    position: relative;
+  }
+  #app-screen.active { display:grid; }
+
+  #topbar {
+    grid-column: 1 / -1; grid-row: 1;
+    display:flex; align-items:center; gap:16px; padding:0 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  #topbar .logo { font-size:17px; font-weight:700; white-space:nowrap; letter-spacing: -0.01em; }
+  #topbar .logo .dot { color:var(--accent); }
+  #topbar .search-wrap { flex:1; max-width:480px; margin:0 auto; }
+  #topbar .search-wrap input {
+    padding:9px 12px 9px 34px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+  }
+  #topbar .search-wrap input:focus { background: rgba(255, 255, 255, 0.08); }
+  #topbar .search-icon-inline { position:relative; }
+  #topbar .search-icon-inline::before {
+    content:"⌕"; position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:15px; pointer-events:none;
+  }
+  #topbar .right-icons { display:flex; align-items:center; gap:8px; margin-left:auto; }
+
+  #rail {
+    grid-column:1; grid-row:2;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display:flex; flex-direction:column; align-items:center; padding:16px 0; gap:8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  #rail .rail-spacer { flex:1; }
+  #rail a.icon-btn, #rail button.icon-btn { text-decoration:none; }
+
+  /* Theme toggle */
+  .theme-toggle {
+    width:40px; height:22px; border-radius:11px; background:var(--surface-2); border:1px solid var(--border);
+    position:relative; cursor:pointer; padding:0; transition: background .2s ease;
+  }
+  .theme-toggle .knob {
+    width:16px; height:16px; border-radius:50%; background:var(--accent); position:absolute; top:2px; left:2px;
+    display:flex; align-items:center; justify-content:center; transition: transform .2s ease;
+  }
+  .theme-toggle .knob [data-lucide] { width:10px; height:10px; color:#06202E; }
+  html[data-theme="light"] .theme-toggle .knob { transform: translateX(18px); }
+
+  #chatListCol {
+    grid-column:2; grid-row:2;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display:flex; flex-direction:column; overflow-y:auto; padding:16px 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  .section-label { font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; margin:6px 6px 10px; display:flex; justify-content:space-between; align-items:center; }
+
+  .group-item {
+    display:flex; align-items:center; gap:10px; padding:11px 13px; border-radius:10px;
+    cursor:pointer; font-size:13.5px; margin-bottom:5px; border:1px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.01);
+  }
+  .group-item:hover { background: rgba(255, 255, 255, 0.04); transform: translateX(2px); }
+  .group-item.active {
+    background: var(--accent-dim);
+    border-color: rgba(56, 189, 248, 0.25);
+    color: var(--accent);
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.08);
+  }
+  .group-item span:first-child { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .badge {
+    font-family:'JetBrains Mono',monospace; font-size:9.5px; padding:2px 8px; border-radius:6px;
+    text-transform:uppercase; color:var(--muted); border:1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.2s ease;
+  }
+  .group-item.active .badge {
+    color: var(--accent);
+    border-color: rgba(56, 189, 248, 0.3);
+    background: rgba(56, 189, 248, 0.1);
+  }
+  .group-item.pinned {
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.08), transparent);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    position: relative;
+  }
+  .group-item.pinned::before { content:"📌"; font-size:11px; margin-right: 2px; }
+  .group-item.pinned .badge { color:var(--accent); border-color:rgba(56, 189, 248, 0.3); }
+
+  #chatView {
+    grid-column:3; grid-row:2;
+    display:flex; flex-direction:column; overflow:hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+  }
+  .chat-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .chat-header h2 { font-size:16px; margin:0; font-weight:600; }
+  .chat-header .meta { font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--muted); }
+  .complaints-toggle {
+    display:none; align-items:center; gap:6px; width:auto; padding:0 12px; height:32px;
+    font-size:12px; border:1px solid rgba(255,255,255,0.1); border-radius:8px;
+    background: rgba(255,255,255,0.03); color:var(--text);
+  }
+  .complaints-toggle:hover { background: rgba(255,255,255,0.07); }
+  .complaints-toggle.active { background:var(--accent-dim); color:var(--accent); border-color: rgba(56,189,248,0.3); }
+
+  #messages {
+    flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px;
+    background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .empty-state { margin:auto; text-align:center; color:var(--muted); font-size:13.5px; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.02em; }
+
+  .input-row {
+    display:flex; gap:12px; padding:16px 20px; border-top:1px solid var(--border);
+    background: rgba(10, 16, 26, 0.3);
+    align-items: center;
+  }
+  .input-row input {
+    flex:1; border-radius: 24px; padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); font-size: 14px;
+  }
+  .input-row input:focus { background: rgba(255, 255, 255, 0.06); }
+  .input-row button { border-radius: 24px; padding:0 22px; height: 42px; }
+
+  #announceCol {
+    grid-column:4; grid-row:2;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding:16px 14px; overflow-y:auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  .announce-card {
+    background: rgba(56, 189, 248, 0.06);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 12px; padding:12px 14px; margin-bottom:12px; font-size:13px; line-height:1.45;
+    transition: all 0.2s ease;
+  }
+  .announce-card:hover {
+    background: rgba(56, 189, 248, 0.1); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(56, 189, 248, 0.05);
+  }
+  .announce-card .sender { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); display:block; margin-bottom:4px; font-weight:600; }
+
+  #footerbar {
+    grid-column:1/-1; grid-row:3;
+    background: transparent;
+    display:flex; align-items:center; justify-content:center; gap:24px; font-size:11.5px; color:var(--muted);
+  }
+  #footerbar a { color:var(--muted); text-decoration:none; transition: color 0.2s ease; }
+  #footerbar a:hover { color:var(--text); }
+
+  .popover {
+    display:none; position:absolute;
+    background: rgba(14, 22, 35, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+    z-index:20;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  #profilePanel { top:74px; right:20px; width:280px; overflow:hidden; }
+  #profilePanel .head { background:linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); border-bottom:2px solid var(--accent); padding:18px; }
+  #profilePanel .fields { padding:16px 18px; font-size:13px; line-height:2.1; }
+  #newChatPanel { top:74px; left:64px; width:300px; padding:16px; }
+  #timetablePanel { top:74px; left:64px; width:380px; padding:16px; text-align:center; }
+  #timetablePanel img { max-width:100%; border-radius:10px; border:1px solid rgba(255, 255, 255, 0.08); }
+
+  #complaintsPanel {
+    top:64px; left:50%; transform:translateX(-50%); width:420px; max-height:70vh;
+    flex-direction:column; overflow:hidden;
+  }
+  #complaintsPanel .complaints-form { padding:16px 18px; border-bottom:1px solid rgba(255,255,255,0.08); }
+  #complaintsPanel .complaints-list-wrap { padding:14px 18px; overflow-y:auto; }
+  #complaintCategory {
+    width:100%; background: rgba(255,255,255,0.03); border:1px solid var(--border);
+    border-radius:10px; padding:10px 12px; color:var(--text); font-size:13px; margin-bottom:10px;
+  }
+  .complaint-card {
+    background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding:12px 14px; margin-bottom:10px; transition: all .2s ease;
+  }
+  .complaint-card:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+  .upvoteBtn {
+    background: rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); color:var(--accent);
+    border-radius:8px; padding:4px 12px; font-size:11.5px; display:flex; align-items:center; gap:6px; width:auto;
+    transition: all .2s ease;
+  }
+  .upvoteBtn:hover { background: rgba(56,189,248,0.18); }
+
+  .avatar {
+    width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12px; color:#05080f; flex-shrink:0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+  .avatar-sm { width:22px; height:22px; font-size:9.5px; }
+
+  .msg-row { display:flex; gap:10px; align-items:flex-end; animation: fadeSlideIn .18s ease-out; width:100%; margin-top: 8px; }
+  .msg-row .avatar-slot { width:32px; flex-shrink:0; }
+  .msg-row.grouped { margin-top:2px; }
+
+  .msg-bubble {
+    max-width:65%;
+    background: var(--bubble-other);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 16px 16px 16px 4px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+  }
+  .msg-bubble .sender { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); display:block; margin-bottom:4px; font-weight:600; }
+
+  .msg-row.me { justify-content: flex-end; }
+  .msg-row.me .msg-bubble {
+    background: var(--bubble-me);
+    border: none;
+    border-radius: 16px 16px 4px 16px;
+    box-shadow: 0 4px 15px rgba(13, 148, 136, 0.2);
+  }
+  .msg-bubble:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25); }
+  .msg-row.me .msg-bubble:hover { box-shadow: 0 5px 15px rgba(13, 148, 136, 0.35); }
+
+  @keyframes fadeSlideIn {
+    from { opacity:0; transform:translateY(6px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .popover { animation: fadeSlideIn .12s ease-out; }
+  [data-lucide] { width:17px; height:17px; }
+</style>
+</head>
+<body>
+
+  <div id="login-screen">
+    <div class="id-card">
+      <div class="id-card-header">
+        <div class="id-stripe"></div>
+        <span class="eyebrow">Student Access · BIT Mesra</span>
+        <h1>Campus Chat</h1>
+        <p class="sub">Sign in with your campus account</p>
+      </div>
+      <div class="id-card-body">
+        <label class="field-label">Email</label>
+        <input id="emailInput" placeholder="you@bitmesra.ac.in" />
+        <label class="field-label">Password</label>
+        <input id="passwordInput" type="password" placeholder="••••••••" />
+        <button class="primary" id="loginBtn" style="width:100%;">Sign in</button>
+        <p id="loginError"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-screen">
+
+    <div id="topbar">
+      <div class="logo">Campus<span class="dot">Chat</span></div>
+      <div class="search-wrap search-icon-inline">
+        <input id="searchGroups" placeholder="Search your chats…" />
+      </div>
+      <div class="right-icons">
+        <button class="icon-btn" id="bellBtn" title="Announcements"><i data-lucide="bell"></i></button>
+        <button class="icon-btn" id="profileBtn" title="Profile"><i data-lucide="user"></i></button>
+      </div>
+    </div>
+
+    <div id="rail">
+      <a class="icon-btn" href="https://YOUR_ERP_URL_HERE" target="_blank" title="ERP"><i data-lucide="graduation-cap"></i></a>
+      <a class="icon-btn" href="https://YOUR_TNP_PORTAL_URL_HERE" target="_blank" title="TnP Portal"><i data-lucide="briefcase"></i></a>
+      <button class="icon-btn" id="hostelBtn" title="Hostel / Complaints"><i data-lucide="home"></i></button>
+      <button class="icon-btn" id="timetableBtn" title="Timetable"><i data-lucide="calendar-days"></i></button>
+      <a class="icon-btn" href="https://YOUR_SYLLABUS_URL_HERE" target="_blank" title="Syllabus (PDF)"><i data-lucide="book-open"></i></a>
+      <a class="icon-btn" href="https://YOUR_PYQS_URL_HERE" target="_blank" title="Previous Year Questions"><i data-lucide="file-text"></i></a>
+      <div class="rail-spacer"></div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle dark / light mode">
+        <span class="knob"><i data-lucide="moon"></i></span>
+      </button>
+    </div>
+
+    <div id="chatListCol">
+      <div class="section-label">
+        <span>Chats &amp; Groups</span>
+        <button id="newChatBtn" class="icon-btn" style="width:22px;height:22px;border:1px solid var(--border);" title="New chat or group"><i data-lucide="plus" style="width:13px;height:13px;"></i></button>
+      </div>
+      <div id="groupList"></div>
+    </div>
+
+    <div id="chatView">
+      <div class="chat-header">
+        <h2 id="activeGroupName" style="cursor:pointer;" title="View group info">Select a chat</h2>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span class="meta mono" id="activeGroupType"></span>
+          <button id="complaintsToggleBtn" class="icon-btn complaints-toggle" title="View complaints">
+            <i data-lucide="clipboard-list" style="width:14px;height:14px;"></i> Complaints
+          </button>
+        </div>
+      </div>
+      <div id="messages">
+        <div class="empty-state">Pick a group or DM from the left to start chatting</div>
+      </div>
+      <div class="input-row">
+        <input id="messageInput" placeholder="Type a message…" autocomplete="off" />
+        <button class="primary" id="sendBtn">Send</button>
+      </div>
+    </div>
+
+    <div id="announceCol">
+      <div class="section-label"><span>📌 Latest Announcements</span></div>
+      <div id="announceList" style="font-size:12px; color:var(--muted);">Loading…</div>
+    </div>
+
+    <div id="footerbar">
+      <a href="#" id="helpLink">Help</a>
+      <a href="#" id="accountLink">Account Center</a>
+      <span>Built by a BIT Mesra student</span>
+      <a href="mailto:YOUR_EMAIL_HERE">Contact</a>
+    </div>
+
+    <div id="profilePanel" class="popover" style="top:74px; right:20px; width:290px; max-height:80vh; display:none; flex-direction:column; overflow:hidden;">
+      <div class="head">
+        <span class="mono" style="font-size:10px;letter-spacing:.1em;color:var(--accent);text-transform:uppercase;">Student ID</span>
+        <h3 id="profileName" style="margin:4px 0 0; font-size:16px;">—</h3>
+        <span class="mono" id="profileRole" style="font-size:11px; color:var(--muted);"></span>
+      </div>
+      <div style="padding:16px 18px; overflow-y:auto;">
+        <label class="field-label">Roll No</label>
+        <input id="settingsRollNo" placeholder="e.g. BTECH/10123/21" style="margin-bottom:12px;" />
+        <label class="field-label">Branch</label>
+        <input id="settingsBranch" placeholder="e.g. ECE" style="margin-bottom:12px;" />
+        <label class="field-label">Semester</label>
+        <input id="settingsSemester" placeholder="e.g. 5" style="margin-bottom:12px;" />
+        <label class="field-label">Hostel No</label>
+        <input id="settingsHostelId" placeholder="e.g. 3" style="margin-bottom:12px;" />
+        <label class="field-label">Room No</label>
+        <input id="settingsRoomNo" placeholder="e.g. A-204" style="margin-bottom:14px;" />
+        <button class="primary" id="saveSettingsBtn" style="width:100%; margin-bottom:10px;">Save changes</button>
+        <button id="logoutBtn" style="width:100%; background:none; border:1px solid rgba(248,113,113,0.4); color:#F87171; border-radius:10px; padding:10px; font-size:13.5px; font-weight:600;">Log out</button>
+      </div>
+    </div>
+
+    <div id="newChatPanel" class="popover">
+      <div class="section-label" style="margin:0 0 8px;">New chat or group</div>
+      <input id="userSearchInput" placeholder="Search students by name…" style="margin-bottom:10px;" />
+      <div id="userSearchResults" style="max-height:160px; overflow-y:auto; margin-bottom:10px;"></div>
+      <input id="newGroupName" placeholder="Group name (if creating a group)" style="margin-bottom:10px;" />
+      <button class="primary" id="createGroupBtn" style="width:100%;">Create group with selected</button>
+    </div>
+
+    <div id="timetablePanel" class="popover">
+      <div class="section-label" style="margin:0 0 8px;">Timetable</div>
+      <img src="YOUR_TIMETABLE_IMAGE_URL_HERE" alt="Timetable" />
+    </div>
+
+    <div id="complaintsPanel" class="popover">
+      <div class="complaints-form">
+        <div class="section-label" style="margin:0 0 10px;">Raise a complaint</div>
+        <select id="complaintCategory">
+          <option value="water">Water</option>
+          <option value="electricity">Electricity</option>
+          <option value="mess">Mess</option>
+          <option value="wifi">Wifi</option>
+          <option value="cleanliness">Cleanliness</option>
+          <option value="other">Other</option>
+        </select>
+        <input id="complaintDescription" placeholder="Describe the issue…" style="margin-bottom:10px;" />
+        <button class="primary" id="raiseComplaintBtn" style="width:100%;">Submit complaint</button>
+      </div>
+      <div class="complaints-list-wrap">
+        <div class="section-label" style="margin:0 0 8px;">All complaints</div>
+        <div id="complaintsList" style="font-size:12.5px; color:var(--muted);">Loading…</div>
+      </div>
+    </div>
+
+    <div id="groupInfoPanel" class="popover" style="position:fixed; width:280px; max-height:65vh; display:none; flex-direction:column; overflow:hidden;">
+      <div style="padding:16px 18px; border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div class="section-label" style="margin:0;">Group Info</div>
+        <h3 id="groupInfoName" style="margin:6px 0 2px; font-size:15px;">—</h3>
+        <span class="mono" id="groupInfoMeta" style="font-size:10.5px; color:var(--muted);"></span>
+      </div>
+      <div style="padding:12px 18px; overflow-y:auto;">
+        <div class="section-label" style="margin:4px 0 8px;">Members</div>
+        <div id="groupInfoMembers"></div>
+        <div class="section-label" style="margin:16px 0 6px;">Media</div>
+        <p style="font-size:11.5px; color:var(--muted); line-height:1.5;">No media sharing yet — coming soon. Files, photos, and auto-download settings will appear here once uploads are supported.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let socket;
+    let currentGroupId = null;
+    let myToken = null;
+    let myName = null;
+    let allGroups = [];
+    let selectedUserIds = [];
+    let lastMessageSender = null;
+
+    const AVATAR_COLORS = ["#38BDF8", "#FDBA74", "#A78BFA", "#4ADE80", "#F472B6", "#FBBF24", "#60A5FA"];
+    function colorForName(name) {
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+    }
+    function initialsForName(name) {
+      const parts = name.trim().split(" ");
+      return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase();
+    }
+    function renderIcons() {
+      if (window.lucide) lucide.createIcons();
+    }
+    renderIcons();
+
+    function closeAllPopovers(except) {
+      ["profilePanel", "newChatPanel", "timetablePanel", "complaintsPanel", "groupInfoPanel"].forEach((id) => {
+        if (id !== except) document.getElementById(id).style.display = "none";
+      });
+    }
+
+    // ---- Theme toggle ----
+    const savedTheme = localStorage.getItem("campuschat-theme") || "dark";
+    if (savedTheme === "light") document.documentElement.setAttribute("data-theme", "light");
+    function applyThemeIcon() {
+      const isLight = document.documentElement.getAttribute("data-theme") === "light";
+      document.querySelector("#themeToggle .knob").innerHTML = `<i data-lucide="${isLight ? "sun" : "moon"}"></i>`;
+      renderIcons();
+    }
+    applyThemeIcon();
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const isLight = document.documentElement.getAttribute("data-theme") === "light";
+      if (isLight) {
+        document.documentElement.removeAttribute("data-theme");
+        localStorage.setItem("campuschat-theme", "dark");
+      } else {
+        document.documentElement.setAttribute("data-theme", "light");
+        localStorage.setItem("campuschat-theme", "light");
+      }
+      applyThemeIcon();
+    });
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("emailInput").value;
+      const password = document.getElementById("passwordInput").value;
+
+      const response = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        document.getElementById("loginError").innerText = data.message;
+        return;
+      }
+
+      myToken = data.token;
+
+      try {
+        const meRes = await fetch("/auth/me", { headers: { Authorization: "Bearer " + myToken } });
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          myName = meData.name;
+        }
+      } catch (err) {
+        console.error("Error fetching profile on login:", err);
+      }
+
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("app-screen").classList.add("active");
+
+      socket = io({ auth: { token: myToken } });
+      socket.on("message_history", renderHistory);
+      socket.on("new_message", (data) => appendMessage(data.username, data.message));
+      socket.on("join_error", (msg) => alert(msg));
+      socket.on("permission_error", (msg) => alert(msg));
+
+      await loadGroups();
+      loadAnnouncements();
+      renderIcons();
+    });
+
+    async function loadGroups() {
+      const res = await fetch("/group/my-groups", { headers: { Authorization: "Bearer " + myToken } });
+      allGroups = await res.json();
+      renderGroupList(allGroups);
+    }
+
+    function renderGroupList(groups) {
+      const list = document.getElementById("groupList");
+      list.innerHTML = "";
+      groups.forEach((g) => {
+        const el = document.createElement("div");
+        el.className = "group-item" + (g.type === "announcement" ? " pinned" : "");
+        el.innerHTML = `<span>${g.name}</span><span class="badge">${g.type}</span>`;
+        el.addEventListener("click", () => selectGroup(g));
+        list.appendChild(el);
+      });
+    }
+
+    document.getElementById("searchGroups").addEventListener("input", (e) => {
+      const term = e.target.value.toLowerCase();
+      renderGroupList(allGroups.filter((g) => g.name.toLowerCase().includes(term)));
+    });
+
+    async function loadAnnouncements() {
+      const announcementGroup = allGroups.find((g) => g.type === "announcement");
+      const list = document.getElementById("announceList");
+      if (!announcementGroup) { list.innerText = "No announcements channel found."; return; }
+
+      const res = await fetch(`/group/${announcementGroup.id}/messages`, {
+        headers: { Authorization: "Bearer " + myToken },
+      });
+      const messages = await res.json();
+      if (messages.length === 0) { list.innerText = "No announcements yet."; return; }
+
+      list.innerHTML = messages.slice(-5).reverse().map((m) =>
+        `<div class="announce-card"><span class="sender">${m.username}</span>${m.content}</div>`
+      ).join("");
+    }
+
+    document.getElementById("bellBtn").addEventListener("click", () => {
+      document.getElementById("announceCol").scrollIntoView({ behavior: "smooth" });
+      loadAnnouncements();
+    });
+
+    document.getElementById("profileBtn").addEventListener("click", async () => {
+      const panel = document.getElementById("profilePanel");
+      const isOpen = panel.style.display === "flex";
+      closeAllPopovers();
+      panel.style.display = isOpen ? "none" : "flex";
+      if (isOpen) return;
+
+      const res = await fetch("/auth/me", { headers: { Authorization: "Bearer " + myToken } });
+      const me = await res.json();
+      document.getElementById("profileName").innerText = me.name;
+      document.getElementById("profileRole").innerText = me.role.toUpperCase();
+      document.getElementById("settingsRollNo").value = me.roll_no || "";
+      document.getElementById("settingsBranch").value = me.branch || "";
+      document.getElementById("settingsSemester").value = me.semester || "";
+      document.getElementById("settingsHostelId").value = me.hostel_id || "";
+      document.getElementById("settingsRoomNo").value = me.room_number || "";
+    });
+
+    document.getElementById("timetableBtn").addEventListener("click", () => {
+      const panel = document.getElementById("timetablePanel");
+      const isOpen = panel.style.display === "block";
+      closeAllPopovers();
+      panel.style.display = isOpen ? "none" : "block";
+    });
+
+    document.getElementById("hostelBtn").addEventListener("click", () => {
+      const hostelGroup = allGroups.find((g) => g.type === "hostel");
+      if (hostelGroup) selectGroup(hostelGroup);
+      else alert("No hostel group found for your account yet.");
+    });
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+      const body = {
+        roll_no: document.getElementById("settingsRollNo").value.trim() || null,
+        branch: document.getElementById("settingsBranch").value.trim() || null,
+        semester: document.getElementById("settingsSemester").value.trim() || null,
+        hostel_id: document.getElementById("settingsHostelId").value.trim() || null,
+        room_number: document.getElementById("settingsRoomNo").value.trim() || null,
+      };
+
+      await fetch("/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + myToken },
+        body: JSON.stringify(body),
+      });
+
+      document.getElementById("profilePanel").style.display = "none";
+      await loadGroups(); // picks up a newly auto-joined hostel group, if any
+      alert("Profile updated");
+    });
+
+    // ---- Logout ----
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      if (socket) socket.disconnect();
+      myToken = null;
+      myName = null;
+      currentGroupId = null;
+      allGroups = [];
+      lastMessageSender = null;
+
+      document.getElementById("app-screen").classList.remove("active");
+      document.getElementById("login-screen").style.display = "flex";
+      document.getElementById("emailInput").value = "";
+      document.getElementById("passwordInput").value = "";
+      document.getElementById("loginError").innerText = "";
+      document.getElementById("messages").innerHTML = `<div class="empty-state">Pick a group or DM from the left to start chatting</div>`;
+      document.getElementById("activeGroupName").innerText = "Select a chat";
+      document.getElementById("activeGroupType").innerText = "";
+      closeAllPopovers();
+    });
+
+    document.getElementById("newChatBtn").addEventListener("click", () => {
+      const panel = document.getElementById("newChatPanel");
+      const isOpen = panel.style.display === "block";
+      closeAllPopovers();
+      panel.style.display = isOpen ? "none" : "block";
+      selectedUserIds = [];
+    });
+
+    document.getElementById("userSearchInput").addEventListener("input", async (e) => {
+      const q = e.target.value.trim();
+      const resultsDiv = document.getElementById("userSearchResults");
+      if (!q) { resultsDiv.innerHTML = ""; return; }
+
+      const res = await fetch(`/users/search?q=${encodeURIComponent(q)}`, { headers: { Authorization: "Bearer " + myToken } });
+      const users = await res.json();
+      resultsDiv.innerHTML = "";
+      users.forEach((u) => {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex; align-items:center; gap:8px; padding:6px 4px; font-size:13px; cursor:pointer; border-radius:6px;";
+        row.innerHTML = `<input type="checkbox" data-id="${u.id}" style="width:auto;margin:0;" /> <span>${u.name}</span> <span class="badge mono" style="font-size:9px;">${u.role}</span>`;
+        const checkbox = row.querySelector("input");
+        checkbox.addEventListener("change", () => {
+          if (checkbox.checked) selectedUserIds.push(u.id);
+          else selectedUserIds = selectedUserIds.filter((id) => id !== u.id);
+        });
+        row.addEventListener("click", (evt) => { if (evt.target !== checkbox) startDM(u.id, u.name); });
+        resultsDiv.appendChild(row);
+      });
+    });
+
+    async function startDM(otherUserId, otherName) {
+      const res = await fetch(`/dms/start/${otherUserId}`, { method: "POST", headers: { Authorization: "Bearer " + myToken } });
+      const data = await res.json();
+      document.getElementById("newChatPanel").style.display = "none";
+      await loadGroups();
+      const dmGroup = allGroups.find((g) => g.id === data.groupId) || { id: data.groupId, name: otherName, type: "dm" };
+      selectGroup(dmGroup);
+    }
+
+    document.getElementById("createGroupBtn").addEventListener("click", async () => {
+      const name = document.getElementById("newGroupName").value.trim();
+      if (!name || selectedUserIds.length === 0) { alert("Enter a group name and select at least one person"); return; }
+      const res = await fetch("/group/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + myToken },
+        body: JSON.stringify({ name, memberIds: selectedUserIds }),
+      });
+      const data = await res.json();
+      document.getElementById("newChatPanel").style.display = "none";
+      await loadGroups();
+      const newGroup = allGroups.find((g) => g.id === data.groupId);
+      if (newGroup) selectGroup(newGroup);
+    });
+
+    function selectGroup(g) {
+      currentGroupId = g.id;
+      document.getElementById("activeGroupName").innerText = g.name;
+      document.getElementById("activeGroupType").innerText = g.type.toUpperCase();
+      document.getElementById("messages").innerHTML = "";
+      lastMessageSender = null;
+      socket.emit("join_room", g.id);
+      document.querySelectorAll(".group-item").forEach((el) => el.classList.remove("active"));
+
+      const complaintsBtn = document.getElementById("complaintsToggleBtn");
+      complaintsBtn.style.display = g.type === "hostel" ? "flex" : "none";
+      renderIcons();
+    }
+
+    // ---- Group info panel (members list, click-to-DM) ----
+    document.getElementById("activeGroupName").addEventListener("click", async () => {
+      if (!currentGroupId) return;
+      const activeG = allGroups.find((g) => g.id === currentGroupId);
+      if (!activeG || activeG.type === "dm") return; // no group-info view for 1:1 DMs
+
+      const panel = document.getElementById("groupInfoPanel");
+      const isOpen = panel.style.display === "flex";
+      closeAllPopovers();
+      if (isOpen) { panel.style.display = "none"; return; }
+
+      // Position it over the chat view column specifically, not the announcements panel —
+      // computed from the chat view's actual on-screen position, since it sits in a
+      // different grid column than the announcements panel.
+      const chatViewRect = document.getElementById("chatView").getBoundingClientRect();
+      panel.style.left = (chatViewRect.right - 280 - 16) + "px";
+      panel.style.top = (chatViewRect.top + 16) + "px";
+      panel.style.display = "flex";
+
+      document.getElementById("groupInfoName").innerText = activeG.name;
+      document.getElementById("groupInfoMeta").innerText = activeG.type.toUpperCase();
+
+      const membersDiv = document.getElementById("groupInfoMembers");
+      membersDiv.innerHTML = "Loading…";
+
+      const res = await fetch(`/group/${currentGroupId}/members`, {
+        headers: { Authorization: "Bearer " + myToken },
+      });
+      const members = await res.json();
+
+      membersDiv.innerHTML = members.map((m) => `
+        <div class="member-row" data-id="${m.id}" data-name="${m.name}" style="display:flex; align-items:center; gap:10px; padding:7px 6px; border-radius:8px; cursor:pointer;">
+          <div class="avatar avatar-sm" style="background:${colorForName(m.name)}">${initialsForName(m.name)}</div>
+          <span style="flex:1; font-size:13px;">${m.name}${m.name === myName ? " (you)" : ""}</span>
+          <span class="badge" style="font-size:8.5px;">${m.role}</span>
+        </div>
+      `).join("");
+
+      document.querySelectorAll(".member-row").forEach((row) => {
+        row.addEventListener("mouseenter", () => row.style.background = "rgba(255,255,255,0.05)");
+        row.addEventListener("mouseleave", () => row.style.background = "transparent");
+        row.addEventListener("click", () => {
+          if (row.dataset.name === myName) return; // can't DM yourself
+          document.getElementById("groupInfoPanel").style.display = "none";
+          startDM(Number(row.dataset.id), row.dataset.name);
+        });
+      });
+    });
+
+    function renderHistory(messages) {
+      const div = document.getElementById("messages");
+      div.innerHTML = "";
+      lastMessageSender = null;
+      if (messages.length === 0) { div.innerHTML = `<div class="empty-state">No messages yet — say something</div>`; return; }
+      messages.forEach((m) => appendMessage(m.username, m.content));
+    }
+
+    function appendMessage(username, content) {
+      const div = document.getElementById("messages");
+      if (div.querySelector(".empty-state")) div.innerHTML = "";
+
+      const isMe = username === myName;
+      const grouped = username === lastMessageSender;
+      const row = document.createElement("div");
+      row.className = "msg-row" + (grouped ? " grouped" : "") + (isMe ? " me" : "");
+
+      const bubble = document.createElement("div");
+      bubble.className = "msg-bubble";
+      bubble.innerHTML = (grouped || isMe ? "" : `<span class="sender">${username}</span>`) + content;
+
+      if (!isMe) {
+        const avatarSlot = document.createElement("div");
+        avatarSlot.className = "avatar-slot";
+        if (!grouped) {
+          avatarSlot.innerHTML = `<div class="avatar" style="background:${colorForName(username)}">${initialsForName(username)}</div>`;
+        }
+        row.appendChild(avatarSlot);
+      }
+
+      row.appendChild(bubble);
+      div.appendChild(row);
+      div.scrollTop = div.scrollHeight;
+
+      lastMessageSender = username;
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    document.getElementById("messageInput").addEventListener("keydown", (e) => { if (e.key === "Enter") sendMessage(); });
+
+    function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const text = input.value.trim();
+      if (!text || !currentGroupId) return;
+      socket.emit("client_hello", { message: text, groupId: currentGroupId });
+      input.value = "";
+    }
+
+    document.getElementById("complaintsToggleBtn").addEventListener("click", () => {
+      const panel = document.getElementById("complaintsPanel");
+      const isOpen = panel.style.display === "flex";
+      closeAllPopovers();
+      panel.style.display = isOpen ? "none" : "flex";
+      document.getElementById("complaintsToggleBtn").classList.toggle("active", !isOpen);
+      if (!isOpen) loadComplaints();
+    });
+
+    async function loadComplaints() {
+      const listEl = document.getElementById("complaintsList");
+      listEl.innerText = "Loading…";
+      const res = await fetch(`/complaints/${currentGroupId}`, { headers: { Authorization: "Bearer " + myToken } });
+      const complaints = await res.json();
+
+      if (complaints.length === 0) { listEl.innerText = "No complaints raised yet."; return; }
+
+      const statusColor = { open: "#F87171", "in-progress": "#FBBF24", resolved: "#4ADE80" };
+
+      listEl.innerHTML = complaints.map((c) => `
+        <div class="complaint-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span class="badge">${c.category}</span>
+            <span class="mono" style="font-size:10px; color:${statusColor[c.status] || 'var(--muted)'};">${c.status.toUpperCase()}</span>
+          </div>
+          <div style="color:var(--text); font-size:12.5px; margin-bottom:10px;">${c.description}</div>
+          <button class="upvoteBtn" data-id="${c.id}">
+            <i data-lucide="arrow-up" style="width:12px;height:12px;"></i> ${c.upvote_count}
+          </button>
+        </div>
+      `).join("");
+
+      renderIcons();
+
+      document.querySelectorAll(".upvoteBtn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try {
+            await fetch(`/complaints/${btn.dataset.id}/upvote`, {
+              method: "POST",
+              headers: { Authorization: "Bearer " + myToken },
+            });
+            loadComplaints();
+          } catch (err) {
+            alert("Already upvoted or something went wrong");
+          }
+        });
+      });
+    }
+
+    document.getElementById("raiseComplaintBtn").addEventListener("click", async () => {
+      const category = document.getElementById("complaintCategory").value;
+      const description = document.getElementById("complaintDescription").value.trim();
+      if (!description) { alert("Describe the issue first"); return; }
+
+      await fetch("/complaints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + myToken },
+        body: JSON.stringify({ group_id: currentGroupId, category, description }),
+      });
+      document.getElementById("complaintDescription").value = "";
+      loadComplaints();
+    });
+  </script>
+</body>
+</html>
