@@ -12,8 +12,10 @@
  * DOSA/admin login: dosa@bitmesra.ac.in / Campus@123
  */
 
+const { createPool } = require("mysql2/promise");
+
 require("dotenv").config();
-const pool = require("./db/connection");
+const pool = require("./db/connection").default;
 
 const BASE = "http://localhost:3001";
 const PASSWORD = "Campus@123";
@@ -294,7 +296,7 @@ async function main() {
     for (const r of residents) {
       try {
         await pool.query("INSERT INTO GroupMembers (group_id, user_id) VALUES (?, ?)", [groupId, r.userId]);
-      } catch (e) {}
+      } catch (e) { }
     }
     if (residents.length >= 2) {
       const c1 = await raiseComplaint(residents[0].token, groupId, "water", "No water supply on the 2nd floor since this morning.");
@@ -346,4 +348,13 @@ async function main() {
 main().catch((err) => {
   console.error("Seed script failed:", err);
   process.exit(1);
+});
+export const pool = createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
