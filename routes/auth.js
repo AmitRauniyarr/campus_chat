@@ -90,26 +90,101 @@ router.get("/me",verifyToken,async(req ,res)=>
     res.json(rows[0]);
 })
 
-router.put("/profile",verifyToken,async(req,res)=>
-{
-    const {roll_no,branch,semester,hostel_id,room_number}=req.body;
+const updateProfileHandler = async (req, res) => {
+    const { roll_no, branch, semester, hostel_id, room_number } = req.body;
+    const userId = req.user.userId;
+    const connection = await pool.getConnection();
     try {
-        await pool.query(
+        await connection.beginTransaction();
+
+        // 1. Get current user's profile details to handle partial updates and compare hostel_id
+        const [userRows] = await connection.query(
+            "SELECT roll_no, branch, semester, hostel_id, room_number FROM Users WHERE id = ?",
+            [userId]
+        );
+        if (userRows.length === 0) {
+            connection.release();
+            return res.status(404).json({ message: "User not found" });
+        }
+        const currentUser = userRows[0];
+        const oldHostelId = currentUser.hostel_id;
+
+        const newRollNo = roll_no !== undefined ? roll_no : currentUser.roll_no;
+        const newBranch = branch !== undefined ? branch : currentUser.branch;
+        const newSemester = semester !== undefined ? semester : currentUser.semester;
+        const newHostelId = hostel_id !== undefined ? (hostel_id ? parseInt(hostel_id, 10) : null) : oldHostelId;
+        const newRoomNumber = room_number !== undefined ? room_number : currentUser.room_number;
+
+        // 2. Update user profile details
+        await connection.query(
             "UPDATE Users SET roll_no=?, branch=?, semester=?, hostel_id=?, room_number=? WHERE id=?",
             [
-                roll_no || null,
-                branch || null,
-                semester || null,
-                hostel_id || null,
-                room_number || null,
-                req.user.userId
+                newRollNo || null,
+                newBranch || null,
+                newSemester || null,
+                newHostelId || null,
+                newRoomNumber || null,
+                userId
             ]
         );
-        res.json({message:"Profile updated successfully"});
-    } catch(err) {
-        console.error("Error updating profile:", err);
-        res.status(500).json({message:"Failed to update profile"});
-    }
-});
 
-module.exports= router;
+        // 3. Handle hostel auto-join/leave if the hostel_id changed
+        if (oldHostelId !== newHostelId) {
+            // Remove user from all hostel groups they are currently in
+            await connection.query(
+                `DELETE gm FROM GroupMembers gm
+                 JOIN ChatGroups cg ON gm.group_id = cg.id
+                 WHERE gm.user_id = ? AND cg.type = 'hostel'`,
+                [userId]
+            );
+
+            // Add user to the new hostel group if a new hostel_id is selected
+            if (newHostelId) {
+                const [hostelGroups] = await connection.query(
+                    "SELECT id FROM ChatGroups WHERE type = 'hostel' AND reference_id = ?",
+                    [newHostelId]
+                );
+
+                if (hostelGroups.length > 0) {
+                    const newGroupId = hostelGroups[0].id;
+                    await connection.query(
+                        "INSERT IGNORE INTO GroupMembers (group_id, user_id) VALUES (?, ?)",
+                        [newGroupId, userId]
+                    );
+                } else {
+                    // Check if the hostel exists in Hostels table first
+                    const [hostelRows] = await connection.query(
+                        "SELECT name FROM Hostels WHERE id = ?",
+                        [newHostelId]
+                    );
+                    if (hostelRows.length > 0) {
+                        const hostelName = hostelRows[0].name;
+                        const [newGroupResult] = await connection.query(
+                            "INSERT INTO ChatGroups (type, reference_id, name) VALUES ('hostel', ?, ?)",
+                            [newHostelId, hostelName]
+                        );
+                        const newGroupId = newGroupResult.insertId;
+                        await connection.query(
+                            "INSERT INTO GroupMembers (group_id, user_id) VALUES (?, ?)",
+                            [newGroupId, userId]
+                        );
+                    }
+                }
+            }
+        }
+
+        await connection.commit();
+        res.json({ message: "Profile updated successfully" });
+    } catch (err) {
+        await connection.rollback();
+        console.error("Error updating profile:", err);
+        res.status(500).json({ message: "Failed to update profile" });
+    } finally {
+        connection.release();
+    }
+};
+
+router.put("/profile", verifyToken, updateProfileHandler);
+router.patch("/me", verifyToken, updateProfileHandler);
+
+module.exports = router;
